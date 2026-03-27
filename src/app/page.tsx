@@ -16,16 +16,7 @@ const FlashCardView = dynamic(() => import("@/components/FlashCardView"), {
   ),
 });
 
-const FillBlank = dynamic(() => import("@/components/FillBlank"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-64 text-gray-400 text-lg">
-      Chargement...
-    </div>
-  ),
-});
-
-const TranslateQuiz = dynamic(() => import("@/components/TranslateQuiz"), {
+const PhraseTranslate = dynamic(() => import("@/components/PhraseTranslate"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-64 text-gray-400 text-lg">
@@ -42,8 +33,7 @@ export default function Home() {
       <TopBar />
       <main className="fixed inset-0 top-[88px] bottom-[72px] flex flex-col items-center justify-center px-4 overflow-y-auto">
         {tab === "cards" && <FlashCardView />}
-        {tab === "fill-blank" && <FillBlank />}
-        {tab === "translate-quiz" && <TranslateQuiz />}
+        {tab === "translate" && <PhraseTranslate />}
       </main>
       <NavBar tab={tab} setTab={setTab} />
     </FlashCardProvider>

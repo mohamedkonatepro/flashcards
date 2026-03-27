@@ -12,4 +12,4 @@ export interface FlashCard {
 
 export type ViewMode = "all" | "review" | "memorized" | "shuffle";
 export type Direction = "fr-ar" | "ar-fr";
-export type AppTab = "cards" | "fill-blank" | "translate-quiz";
+export type AppTab = "cards" | "translate";

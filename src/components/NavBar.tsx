@@ -12,8 +12,7 @@ const cardTabs: { mode: ViewMode; label: string; icon: string }[] = [
 
 const appTabs: { id: AppTab; label: string; icon: string }[] = [
   { id: "cards", label: "Cartes", icon: "🃏" },
-  { id: "fill-blank", label: "Trou", icon: "✏️" },
-  { id: "translate-quiz", label: "QCM", icon: "🧠" },
+  { id: "translate", label: "Traduire", icon: "📝" },
 ];
 
 export default function NavBar({
