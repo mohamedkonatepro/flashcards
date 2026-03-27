@@ -37,18 +37,56 @@ export default function FillBlank() {
     if (!card) return { phrase: "", answer: "", hint: "", phraseLang: "ar", answerLang: "ar" };
 
     // Always show Arabic phrase with blank — answer is always the Arabic word
-    // Hint is always the French translation
-    const phrase = card.arabic_phrase.replace(card.arabic_word, "______");
+    const stripDiacritics = (s: string) => s.replace(/[\u064B-\u065F\u0670]/g, "");
+
+    let phrase = card.arabic_phrase.replace(card.arabic_word, "______");
+    let hasBlank = phrase.includes("______");
+
+    // If exact match failed, try matching without diacritics
+    if (!hasBlank) {
+      const strippedPhrase = stripDiacritics(card.arabic_phrase);
+      const strippedWord = stripDiacritics(card.arabic_word);
+      const idx = strippedPhrase.indexOf(strippedWord);
+      if (idx !== -1) {
+        // Map stripped index back to original string position
+        // Walk through original string, counting only non-diacritic chars
+        let origStart = -1;
+        let origEnd = -1;
+        let strippedPos = 0;
+        for (let i = 0; i < card.arabic_phrase.length; i++) {
+          const ch = card.arabic_phrase[i];
+          const isDiacritic = /[\u064B-\u065F\u0670]/.test(ch);
+          if (!isDiacritic) {
+            if (strippedPos === idx) origStart = i;
+            if (strippedPos === idx + strippedWord.length - 1) {
+              // Include trailing diacritics
+              origEnd = i + 1;
+              while (origEnd < card.arabic_phrase.length && /[\u064B-\u065F\u0670]/.test(card.arabic_phrase[origEnd])) {
+                origEnd++;
+              }
+              break;
+            }
+            strippedPos++;
+          }
+        }
+        if (origStart !== -1 && origEnd !== -1) {
+          phrase = card.arabic_phrase.substring(0, origStart) + "______" + card.arabic_phrase.substring(origEnd);
+          hasBlank = true;
+        }
+      }
+    }
+
     return {
-      phrase: phrase.includes("______") ? phrase : `${card.arabic_phrase} → ______`,
+      phrase: hasBlank ? phrase : card.arabic_phrase,
       answer: card.arabic_word,
       hint: card.french_word,
+      hasBlank,
       phraseLang: "ar" as const,
       answerLang: "ar" as const,
     };
   }, [card]);
 
-  const { phrase, answer, hint, phraseLang, answerLang } = getBlankData();
+  const { phrase, answer, hint, hasBlank, phraseLang, answerLang } = getBlankData();
 
   const normalize = (s: string) =>
     s
@@ -139,7 +177,7 @@ export default function FillBlank() {
         onClick={() => setShowTranslation(!showTranslation)}
       >
         <div className="text-[10px] uppercase tracking-[0.2em] text-indigo-300/50 mb-3 flex items-center justify-between">
-          <span>Complète le mot manquant</span>
+          <span>{hasBlank ? "Complète le mot manquant" : "Quel est le mot arabe ?"}</span>
           <span>{showTranslation ? "▲ Masquer" : "▼ Voir traduction"}</span>
         </div>
 
