@@ -33,33 +33,19 @@ export default function FillBlank() {
   const card = shuffled[index];
 
   const getBlankData = useCallback(() => {
-    if (!card) return { phrase: "", answer: "", lang: "" };
+    if (!card) return { phrase: "", answer: "", hint: "", phraseLang: "ar", answerLang: "ar" };
 
-    if (direction === "fr-ar") {
-      // Show French phrase with blank, answer is Arabic word
-      const phrase = card.french_phrase.replace(
-        new RegExp(card.french_word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
-        "______"
-      );
-      return {
-        phrase: phrase.includes("______") ? phrase : `${card.french_phrase} → ______`,
-        answer: card.arabic_word,
-        hint: card.french_word,
-        phraseLang: "fr",
-        answerLang: "ar",
-      };
-    } else {
-      // Show Arabic phrase with blank, answer is French word
-      const phrase = card.arabic_phrase.replace(card.arabic_word, "______");
-      return {
-        phrase: phrase.includes("______") ? phrase : `${card.arabic_phrase} → ______`,
-        answer: card.french_word,
-        hint: card.arabic_word,
-        phraseLang: "ar",
-        answerLang: "fr",
-      };
-    }
-  }, [card, direction]);
+    // Always show Arabic phrase with blank — answer is always the Arabic word
+    // Hint is always the French translation
+    const phrase = card.arabic_phrase.replace(card.arabic_word, "______");
+    return {
+      phrase: phrase.includes("______") ? phrase : `${card.arabic_phrase} → ______`,
+      answer: card.arabic_word,
+      hint: card.french_word,
+      phraseLang: "ar" as const,
+      answerLang: "ar" as const,
+    };
+  }, [card]);
 
   const { phrase, answer, hint, phraseLang, answerLang } = getBlankData();
 
