@@ -18,6 +18,7 @@ export default function FillBlank() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [shake, setShake] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Shuffle on mount
@@ -80,6 +81,7 @@ export default function FillBlank() {
     setInput("");
     setRevealed(false);
     setIsCorrect(null);
+    setShowTranslation(false);
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -127,28 +129,37 @@ export default function FillBlank() {
         </div>
       </div>
 
-      {/* Phrase card */}
+      {/* Phrase card — tap to see French translation */}
       <div
-        className={`w-full rounded-2xl p-6 ${shake ? "animate-shake" : ""}`}
+        className={`w-full rounded-2xl p-6 cursor-pointer active:scale-[0.98] transition-transform ${shake ? "animate-shake" : ""}`}
         style={{
           background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)",
           boxShadow: "0 12px 30px rgba(79, 70, 229, 0.2)",
         }}
+        onClick={() => setShowTranslation(!showTranslation)}
       >
-        <div className="text-[10px] uppercase tracking-[0.2em] text-indigo-300/50 mb-3">
-          Complète le mot manquant
+        <div className="text-[10px] uppercase tracking-[0.2em] text-indigo-300/50 mb-3 flex items-center justify-between">
+          <span>Complète le mot manquant</span>
+          <span>{showTranslation ? "▲ Masquer" : "▼ Voir traduction"}</span>
         </div>
 
         <p
-          className={`text-xl text-center leading-relaxed text-white ${phraseLang === "ar" ? "font-arabic text-2xl" : ""}`}
-          dir={phraseLang === "ar" ? "rtl" : "ltr"}
+          className="text-2xl text-center leading-relaxed text-white font-arabic"
+          dir="rtl"
         >
           {phrase}
         </p>
 
+        {/* French translation — shown on tap */}
+        {showTranslation && card && (
+          <p className="text-center text-sm text-indigo-200/70 mt-4 pt-3 border-t border-indigo-400/20">
+            {card.french_phrase}
+          </p>
+        )}
+
         {hint && (
           <p className="text-center text-xs text-indigo-300/40 mt-3">
-            Indice : <span className={`${answerLang === "ar" ? "" : ""} text-indigo-300/60`}>{hint}</span>
+            Indice : <span className="text-indigo-300/60">{hint}</span>
           </p>
         )}
       </div>
