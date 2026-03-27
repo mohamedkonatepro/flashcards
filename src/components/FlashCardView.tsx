@@ -7,22 +7,16 @@ import { FlashCard } from "@/types";
 function CardFace({
   card,
   direction,
-  showPhrase,
   flipped,
-  interactive = false,
 }: {
   card: FlashCard;
   direction: "fr-ar" | "ar-fr";
-  showPhrase: boolean;
   flipped: boolean;
-  interactive?: boolean;
 }) {
   const front = direction === "fr-ar" ? card.french_word : card.arabic_word;
   const back = direction === "fr-ar" ? card.arabic_word : card.french_word;
   const frontPhrase = direction === "fr-ar" ? card.french_phrase : card.arabic_phrase;
   const backPhrase = direction === "fr-ar" ? card.arabic_phrase : card.french_phrase;
-  const frontLang = direction === "fr-ar" ? "Français" : "العربية";
-  const backLang = direction === "fr-ar" ? "العربية" : "Français";
   const isArabicFront = direction === "ar-fr";
   const isArabicBack = direction === "fr-ar";
 
@@ -32,13 +26,13 @@ function CardFace({
         className="relative w-full h-full"
         style={{
           transformStyle: "preserve-3d",
-          transform: flipped && interactive ? "rotateY(180deg)" : "rotateY(0)",
+          transform: flipped ? "rotateY(180deg)" : "rotateY(0)",
           transition: "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
         {/* Front */}
         <div
-          className="absolute inset-0 rounded-2xl text-white flex flex-col items-center justify-center p-6 pt-8 overflow-visible"
+          className="absolute inset-0 rounded-2xl text-white flex flex-col items-center justify-center p-6 overflow-hidden"
           style={{
             backfaceVisibility: "hidden",
             background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6d28d9 100%)",
@@ -49,29 +43,26 @@ function CardFace({
             className="absolute inset-0 rounded-2xl opacity-10"
             style={{ background: "radial-gradient(circle at 30% 20%, white 0%, transparent 50%)" }}
           />
-          <span className="text-[10px] uppercase tracking-[0.2em] opacity-50 mb-4 font-medium">{frontLang}</span>
           <span
-            className={`text-3xl font-bold text-center mt-1 ${isArabicFront ? "font-arabic" : ""}`}
+            className={`text-3xl font-bold text-center ${isArabicFront ? "font-arabic" : ""}`}
             dir={isArabicFront ? "rtl" : "ltr"}
           >
             {front}
           </span>
-          {showPhrase && interactive && frontPhrase && (
+          {frontPhrase && (
             <p
-              className={`mt-5 opacity-90 text-center leading-relaxed max-w-[90%] ${isArabicFront ? "font-arabic text-xl" : "text-lg"}`}
+              className={`mt-4 opacity-80 text-center leading-relaxed max-w-[90%] ${isArabicFront ? "font-arabic text-lg" : "text-base"}`}
               dir={isArabicFront ? "rtl" : "ltr"}
             >
               {frontPhrase}
             </p>
           )}
-          {interactive && (
-            <span className="absolute bottom-4 text-[10px] opacity-30 tracking-wider">TOUCHE POUR RETOURNER</span>
-          )}
+          <span className="absolute bottom-4 text-[10px] opacity-30 tracking-wider">TOUCHE POUR RETOURNER</span>
         </div>
 
         {/* Back */}
         <div
-          className="absolute inset-0 rounded-2xl text-white flex flex-col items-center justify-center p-6 pt-8 overflow-visible"
+          className="absolute inset-0 rounded-2xl text-white flex flex-col items-center justify-center p-6 overflow-hidden"
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
@@ -83,16 +74,15 @@ function CardFace({
             className="absolute inset-0 rounded-2xl opacity-10"
             style={{ background: "radial-gradient(circle at 30% 20%, white 0%, transparent 50%)" }}
           />
-          <span className="text-[10px] uppercase tracking-[0.2em] opacity-50 mb-4 font-medium">{backLang}</span>
           <span
-            className={`text-3xl font-bold text-center mt-1 ${isArabicBack ? "font-arabic" : ""}`}
+            className={`text-3xl font-bold text-center ${isArabicBack ? "font-arabic" : ""}`}
             dir={isArabicBack ? "rtl" : "ltr"}
           >
             {back}
           </span>
-          {showPhrase && interactive && backPhrase && (
+          {backPhrase && (
             <p
-              className={`mt-5 opacity-90 text-center leading-relaxed max-w-[90%] ${isArabicBack ? "font-arabic text-xl" : "text-lg"}`}
+              className={`mt-4 opacity-80 text-center leading-relaxed max-w-[90%] ${isArabicBack ? "font-arabic text-lg" : "text-base"}`}
               dir={isArabicBack ? "rtl" : "ltr"}
             >
               {backPhrase}
@@ -107,14 +97,12 @@ function CardFace({
 export default function FlashCardView() {
   const { filteredCards, direction, currentIndex, setCurrentIndex, markAs, loading } = useFlashCards();
   const [flipped, setFlipped] = useState(false);
-  const [showPhrase, setShowPhrase] = useState(false);
   const [, forceRender] = useState(0);
 
-  // ALL swipe logic in refs to avoid stale closures
   const dragXRef = useRef(0);
   const isDraggingRef = useRef(false);
-  const isLockedRef = useRef(false); // hard lock to prevent double-fire
-  const justArrivedRef = useRef(false); // skip transition on first frame after swap
+  const isLockedRef = useRef(false);
+  const justArrivedRef = useRef(false);
   const startXRef = useRef(0);
   const startTimeRef = useRef(0);
   const animFrameRef = useRef<number>(0);
@@ -128,26 +116,21 @@ export default function FlashCardView() {
   }, []);
 
   const goToCard = useCallback((newIndex: number, dir: "left" | "right") => {
-    if (isLockedRef.current) return; // HARD lock
+    if (isLockedRef.current) return;
     isLockedRef.current = true;
     isDraggingRef.current = false;
 
-    // Animate current card out
     dragXRef.current = dir === "left" ? -420 : 420;
     render();
 
     setTimeout(() => {
-      // New card appears instantly — no transition on first frame
       justArrivedRef.current = true;
       setFlipped(false);
-      setShowPhrase(false);
       setCurrentIndex(newIndex);
       dragXRef.current = 0;
       isDraggingRef.current = false;
       render();
 
-      // Double rAF: guarantees the browser painted the "no transition" frame
-      // before we re-enable transitions
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           justArrivedRef.current = false;
@@ -171,14 +154,12 @@ export default function FlashCardView() {
     } else if (shouldSwipe && dx < 0 && currentIndex < filteredCards.length - 1) {
       goToCard(currentIndex + 1, "left");
     } else {
-      // Snap back
       dragXRef.current = 0;
       isDraggingRef.current = false;
       render();
     }
   }, [currentIndex, filteredCards.length, goToCard, render]);
 
-  // --- Touch handlers ---
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (isLockedRef.current) return;
     startXRef.current = e.touches[0].clientX;
@@ -190,7 +171,6 @@ export default function FlashCardView() {
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isDraggingRef.current || isLockedRef.current) return;
     dragXRef.current = e.touches[0].clientX - startXRef.current;
-    // Use rAF to batch renders
     cancelAnimationFrame(animFrameRef.current);
     animFrameRef.current = requestAnimationFrame(render);
   }, [render]);
@@ -200,7 +180,6 @@ export default function FlashCardView() {
     finishSwipe();
   }, [finishSwipe]);
 
-  // --- Mouse handlers ---
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (isLockedRef.current) return;
     startXRef.current = e.clientX;
@@ -254,15 +233,12 @@ export default function FlashCardView() {
   const dx = dragXRef.current;
   const dragging = isDraggingRef.current;
   const locked = isLockedRef.current;
+  const justArrived = justArrivedRef.current;
 
-  // Which bg card to show
   const bgCard = dx > 0 ? prevCard : dx < 0 ? nextCard : nextCard || prevCard;
 
-  // Main card style
   const dragProgress = Math.min(Math.abs(dx) / 200, 1);
   const rotation = dx * 0.06;
-
-  const justArrived = justArrivedRef.current;
 
   const currentStyle: React.CSSProperties = locked
     ? {
@@ -279,7 +255,6 @@ export default function FlashCardView() {
       }
     : justArrived
     ? {
-        // Card just swapped in — NO transition, sit immediately in place
         transform: "translateX(0) rotate(0deg)",
         transition: "none",
         cursor: "grab",
@@ -290,8 +265,6 @@ export default function FlashCardView() {
         cursor: "grab",
       };
 
-  // Background card — visually IDENTICAL to main card
-  // Same size, same opacity, same shadow — only z-index differs
   const bgStyle: React.CSSProperties = {
     transform: "none",
     opacity: 1,
@@ -328,15 +301,13 @@ export default function FlashCardView() {
       </div>
 
       {/* Card stack */}
-      <div className="relative w-full" style={{ height: "220px" }}>
-        {/* Background card — real next/prev */}
+      <div className="relative w-full" style={{ height: "240px" }}>
         {bgCard && (
           <div className="absolute inset-0 z-0" style={bgStyle}>
-            <CardFace card={bgCard} direction={direction} showPhrase={false} flipped={false} />
+            <CardFace card={bgCard} direction={direction} flipped={false} />
           </div>
         )}
 
-        {/* Main card */}
         <div
           className="absolute inset-0 z-10"
           style={currentStyle}
@@ -346,23 +317,9 @@ export default function FlashCardView() {
           onMouseDown={handleMouseDown}
           onClick={handleCardClick}
         >
-          <CardFace card={card} direction={direction} showPhrase={showPhrase} flipped={flipped} interactive />
+          <CardFace card={card} direction={direction} flipped={flipped} />
         </div>
       </div>
-
-      {/* Phrase toggle */}
-      {(card.french_phrase || card.arabic_phrase) && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowPhrase(!showPhrase);
-          }}
-          className="text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors flex items-center gap-1.5"
-        >
-          <span>{showPhrase ? "◉" : "○"}</span>
-          <span>{showPhrase ? "Masquer la phrase" : "Voir la phrase"}</span>
-        </button>
-      )}
 
       {/* Navigation dots */}
       <div className="flex items-center gap-1.5">
