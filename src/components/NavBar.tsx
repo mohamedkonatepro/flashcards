@@ -7,7 +7,6 @@ const cardTabs: { mode: ViewMode; label: string; icon: string }[] = [
   { mode: "all", label: "Tous", icon: "📚" },
   { mode: "review", label: "À revoir", icon: "🔁" },
   { mode: "memorized", label: "Mémorisés", icon: "✅" },
-  { mode: "shuffle", label: "Mélanger", icon: "🔀" },
 ];
 
 const appTabs: { id: AppTab; label: string; icon: string }[] = [
@@ -28,8 +27,7 @@ export default function NavBar({
     switch (mode) {
       case "review": return stats.review;
       case "memorized": return stats.memorized;
-      case "all":
-      case "shuffle": return stats.total;
+      case "all": return stats.total;
     }
   };
 

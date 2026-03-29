@@ -70,16 +70,20 @@ export function FlashCardProvider({ children }: { children: React.ReactNode }) {
   }, [fetchCards]);
 
   const filteredCards = React.useMemo(() => {
+    let result: FlashCard[];
     switch (viewMode) {
       case "review":
-        return cards.filter((c) => c.status === "review");
+        result = cards.filter((c) => c.status === "review");
+        break;
       case "memorized":
-        return cards.filter((c) => c.status === "memorized");
-      case "shuffle":
-        return shuffleArray(cards);
+        result = cards.filter((c) => c.status === "memorized");
+        break;
       default:
-        return cards;
+        result = [...cards];
+        break;
     }
+    // Always shuffle so the order is different every time
+    return shuffleArray(result);
   }, [cards, viewMode]);
 
   useEffect(() => {
