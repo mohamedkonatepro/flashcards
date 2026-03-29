@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { FlashCard, ViewMode, Direction } from "@/types";
 import { supabase } from "@/lib/supabase";
 
@@ -37,6 +37,17 @@ function shuffleArray<T>(arr: T[]): T[] {
   return a;
 }
 
+function getFilteredIds(cards: FlashCard[], viewMode: ViewMode): string[] {
+  switch (viewMode) {
+    case "review":
+      return cards.filter((c) => c.status === "review").map((c) => c.id);
+    case "memorized":
+      return cards.filter((c) => c.status === "memorized").map((c) => c.id);
+    default:
+      return cards.map((c) => c.id);
+  }
+}
+
 export function FlashCardProvider({ children }: { children: React.ReactNode }) {
   const [cards, setCards] = useState<FlashCard[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("all");
@@ -69,26 +80,35 @@ export function FlashCardProvider({ children }: { children: React.ReactNode }) {
     fetchCards();
   }, [fetchCards]);
 
-  const filteredCards = React.useMemo(() => {
-    let result: FlashCard[];
-    switch (viewMode) {
-      case "review":
-        result = cards.filter((c) => c.status === "review");
-        break;
-      case "memorized":
-        result = cards.filter((c) => c.status === "memorized");
-        break;
-      default:
-        result = [...cards];
-        break;
-    }
-    // Always shuffle so the order is different every time
-    return shuffleArray(result);
+  // Shuffle order stored separately — only reshuffled when viewMode changes
+  const [shuffledOrder, setShuffledOrder] = useState<string[]>([]);
+  const prevViewModeRef = useRef(viewMode);
+
+  // Reshuffle when viewMode changes or on first load
+  useEffect(() => {
+    const ids = getFilteredIds(cards, viewMode);
+    setShuffledOrder(shuffleArray(ids));
+    setCurrentIndex(0);
+    prevViewModeRef.current = viewMode;
+  }, [viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When cards change (e.g. markAs), update the order without reshuffling:
+  // - keep existing cards in their current order
+  // - remove cards that no longer match the filter
+  // - append any new matching cards at the end
+  useEffect(() => {
+    const validIds = new Set(getFilteredIds(cards, viewMode));
+    setShuffledOrder((prev) => {
+      const kept = prev.filter((id) => validIds.has(id));
+      const newIds = [...validIds].filter((id) => !prev.includes(id));
+      return [...kept, ...newIds];
+    });
   }, [cards, viewMode]);
 
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [viewMode]);
+  const filteredCards = React.useMemo(() => {
+    const cardMap = new Map(cards.map((c) => [c.id, c]));
+    return shuffledOrder.map((id) => cardMap.get(id)).filter(Boolean) as FlashCard[];
+  }, [cards, shuffledOrder]);
 
   const markAs = useCallback(async (id: string, status: FlashCard["status"]) => {
     // Optimistic update
