@@ -39,6 +39,8 @@ function shuffleArray<T>(arr: T[]): T[] {
 
 function getFilteredIds(cards: FlashCard[], viewMode: ViewMode): string[] {
   switch (viewMode) {
+    case "new":
+      return cards.filter((c) => c.status === "new").map((c) => c.id);
     case "review":
       return cards.filter((c) => c.status === "review").map((c) => c.id);
     case "memorized":

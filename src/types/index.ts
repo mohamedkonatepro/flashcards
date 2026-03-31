@@ -10,6 +10,6 @@ export interface FlashCard {
   created_at: string;
 }
 
-export type ViewMode = "all" | "review" | "memorized";
+export type ViewMode = "all" | "new" | "review" | "memorized";
 export type Direction = "fr-ar" | "ar-fr";
 export type AppTab = "cards" | "translate";

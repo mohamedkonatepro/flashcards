@@ -5,6 +5,7 @@ import { ViewMode, AppTab } from "@/types";
 
 const cardTabs: { mode: ViewMode; label: string; icon: string }[] = [
   { mode: "all", label: "Tous", icon: "📚" },
+  { mode: "new", label: "Nouveaux", icon: "🆕" },
   { mode: "review", label: "À revoir", icon: "🔁" },
   { mode: "memorized", label: "Mémorisés", icon: "✅" },
 ];
@@ -25,6 +26,7 @@ export default function NavBar({
 
   const getCount = (mode: ViewMode) => {
     switch (mode) {
+      case "new": return stats.new_;
       case "review": return stats.review;
       case "memorized": return stats.memorized;
       case "all": return stats.total;
