@@ -4,6 +4,45 @@ import { useState, useRef, useCallback } from "react";
 import { useFlashCards } from "@/context/FlashCardContext";
 import { FlashCard } from "@/types";
 
+function speak(text: string, lang: "ar" | "fr") {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang === "ar" ? "ar-SA" : "fr-FR";
+  utterance.rate = lang === "ar" ? 0.85 : 0.95;
+  window.speechSynthesis.speak(utterance);
+}
+
+function SpeakButton({ text, lang, className = "" }: { text: string; lang: "ar" | "fr"; className?: string }) {
+  const [playing, setPlaying] = useState(false);
+
+  const handleSpeak = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang === "ar" ? "ar-SA" : "fr-FR";
+    utterance.rate = lang === "ar" ? 0.85 : 0.95;
+    utterance.onstart = () => setPlaying(true);
+    utterance.onend = () => setPlaying(false);
+    utterance.onerror = () => setPlaying(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  return (
+    <button
+      onClick={handleSpeak}
+      onTouchEnd={handleSpeak}
+      className={`w-8 h-8 flex items-center justify-center rounded-full transition-all active:scale-90 ${
+        playing ? "bg-white/30 scale-110" : "bg-white/10 hover:bg-white/20"
+      } ${className}`}
+    >
+      <span className={`text-sm ${playing ? "animate-pulse" : ""}`}>🔊</span>
+    </button>
+  );
+}
+
 function CardFace({
   card,
   direction,
@@ -19,6 +58,8 @@ function CardFace({
   const backPhrase = direction === "fr-ar" ? card.arabic_phrase : card.french_phrase;
   const isArabicFront = direction === "ar-fr";
   const isArabicBack = direction === "fr-ar";
+  const frontLang = isArabicFront ? "ar" : "fr";
+  const backLang = isArabicBack ? "ar" : "fr";
 
   return (
     <div className="w-full h-full" style={{ perspective: "1200px" }}>
@@ -42,6 +83,11 @@ function CardFace({
           <div
             className="absolute inset-0 rounded-2xl opacity-10"
             style={{ background: "radial-gradient(circle at 30% 20%, white 0%, transparent 50%)" }}
+          />
+          <SpeakButton
+            text={`${front}. ${frontPhrase || ""}`}
+            lang={frontLang as "ar" | "fr"}
+            className="absolute top-3 right-3"
           />
           <span
             className={`text-3xl font-bold text-center ${isArabicFront ? "font-arabic" : ""}`}
@@ -73,6 +119,11 @@ function CardFace({
           <div
             className="absolute inset-0 rounded-2xl opacity-10"
             style={{ background: "radial-gradient(circle at 30% 20%, white 0%, transparent 50%)" }}
+          />
+          <SpeakButton
+            text={`${back}. ${backPhrase || ""}`}
+            lang={backLang as "ar" | "fr"}
+            className="absolute top-3 right-3"
           />
           <span
             className={`text-3xl font-bold text-center ${isArabicBack ? "font-arabic" : ""}`}
